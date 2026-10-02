@@ -8,6 +8,7 @@ import { useSalesFeed, type FeedUpdate } from "@/app/hooks/useSalesFeed";
 
 import BilletsScene, { type BilletsSceneHandle } from "./BilletsScene";
 import Counter from "./Counter";
+import SoundButton from "./SoundButton";
 
 const POLL_INTERVAL_MS = Math.max(1000, Number(process.env.NEXT_PUBLIC_SALES_POLL_MS) || 2000);
 /** Pausa entre celebraciones cuando llegan varias ventas juntas. */
@@ -33,7 +34,7 @@ export default function SalesLanding() {
     displayCountRef.current = displayCount;
   }, [displayCount]);
 
-  const { play: playSound } = useCashSound();
+  const { play: playSound, enable: enableSound, unlocked: soundUnlocked } = useCashSound();
 
   const celebrate = useCallback(
     (count: number) => {
@@ -112,10 +113,8 @@ export default function SalesLanding() {
 
   return (
     <main className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden px-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-20 bg-[radial-gradient(ellipse_at_50%_-10%,#6a44a8_0%,#41276b_38%,#170d29_85%)]"
-      />
+      <div aria-hidden="true" className="money-backdrop pointer-events-none fixed inset-0 -z-20" />
+      <div aria-hidden="true" className="money-grid pointer-events-none fixed inset-0 -z-20" />
       <BilletsScene ref={sceneRef} className="-z-10" />
 
       {MODO_PRUEBA.activo && (
@@ -126,6 +125,8 @@ export default function SalesLanding() {
 
       <h1 className="sr-only">Ventas totales</h1>
       <Counter value={displayCount} bumpKey={bumpKey} />
+
+      {!soundUnlocked && <SoundButton onClick={() => void enableSound()} />}
     </main>
   );
 }

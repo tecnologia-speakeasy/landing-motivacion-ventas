@@ -1,16 +1,14 @@
 @import "tailwindcss";
 
-/* Colores de marca Speak Easy: morado #41276B y fucsia #FF327D. */
+/* Paleta: negro profundo con acentos verde esmeralda. */
 :root {
-  --se-purple: #41276b;
-  --se-pink: #ff327d;
-  --se-night: #170d29;
+  --ink: #040605;
+  --emerald: #10b981;
+  --mint: #a7f3d0;
 }
 
 @theme inline {
-  --color-se-purple: var(--se-purple);
-  --color-se-pink: var(--se-pink);
-  --color-se-night: var(--se-night);
+  --color-ink: var(--ink);
   --font-sans: var(--font-montserrat), Arial, sans-serif;
 }
 
@@ -19,14 +17,36 @@ html {
 }
 
 body {
-  background: var(--se-night);
+  background: var(--ink);
   color: #fff;
   font-family: var(--font-montserrat), Arial, sans-serif;
 }
 
-/* Sombra oscura suave: el número sigue legible cuando pasan billetes por detrás. */
-.counter-glow {
-  text-shadow: 0 6px 28px rgb(0 0 0 / 0.35);
+/* Fondo: resplandor esmeralda arriba, verde muy oscuro abajo, sobre negro. */
+.money-backdrop {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -8%, rgb(16 185 129 / 0.26), transparent 70%),
+    radial-gradient(ellipse 70% 45% at 50% 112%, rgb(6 78 59 / 0.4), transparent 70%),
+    linear-gradient(180deg, #06110c 0%, var(--ink) 65%);
+}
+
+/* Cuadrícula tenue estilo panel financiero, desvanecida hacia los bordes. */
+.money-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black 20%, transparent 75%);
+}
+
+/* Número: blanco con degradado sutil a menta. La sombra va como filter porque
+   text-shadow se vería a través del texto recortado sobre el degradado. */
+.counter-number {
+  background: linear-gradient(180deg, #ffffff 35%, var(--mint) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 8px 24px rgb(0 0 0 / 0.55));
 }
 
 /* "Salto" del contador en cada venta. */

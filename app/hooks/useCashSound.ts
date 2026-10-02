@@ -1,10 +1,10 @@
 "use client";
 
 import type { Howl, HowlerGlobal } from "howler";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Howler usa el primer formato soportado. Añade aquí un .mp3/.webm si reemplazas el sonido. */
-export const CASH_SOUND_SRC = ["/sounds/cash.wav"];
+export const CASH_SOUND_SRC = ["/sounds/ring.mp3"];
 
 const UNLOCK_EVENTS = ["pointerdown", "keydown", "touchend"] as const;
 
@@ -14,16 +14,19 @@ function isAudioRunning(howler: HowlerGlobal | null): boolean {
 }
 
 /**
- * Sonido de "venta" con Howler.js, siempre activo y al volumen máximo.
+ * Sonido de "venta" con Howler.js, al volumen máximo.
  *
  * Howler se importa de forma diferida (cuando el navegador está ocioso) para
  * no pesar en la carga inicial. Usa Web Audio con el buffer ya decodificado,
  * así que `play()` suena sin retardo perceptible.
  *
  * Los navegadores bloquean el audio hasta la primera interacción con la
- * página: basta un clic (o una tecla) en cualquier parte una vez al abrirla.
+ * página. `unlocked` indica si ya se puede sonar: la landing muestra el botón
+ * "Activar sonido" mientras sea false. Cualquier clic o tecla también lo
+ * desbloquea.
  */
 export function useCashSound() {
+  const [unlocked, setUnlocked] = useState(false);
   const howlRef = useRef<Howl | null>(null);
   const howlerRef = useRef<HowlerGlobal | null>(null);
   const loadRef = useRef<Promise<void> | null>(null);
@@ -38,11 +41,27 @@ export function useCashSound() {
           preload: true,
           pool: 8, // varias ventas seguidas pueden solaparse
           onloaderror: (_id, error) => console.warn("[sonido] No se pudo cargar el sonido", error),
+          // Howler desbloquea por su cuenta en el primer clic si ya estaba cargado.
+          onunlock: () => setUnlocked(true),
         });
+        // Navegadores que permiten autoplay: ya está listo, sin botón.
+        if (isAudioRunning(Howler)) setUnlocked(true);
       })
       .catch((error: unknown) => console.warn("[sonido] No se pudo cargar Howler", error));
     return loadRef.current;
   }, []);
+
+  /** Carga Howler (si hace falta) y reanuda el audio. Debe llamarse desde un gesto del usuario. */
+  const unlock = useCallback(async (): Promise<boolean> => {
+    await load();
+    const howler = howlerRef.current;
+    if (howler?.usingWebAudio && howler.ctx?.state !== "running") {
+      await howler.ctx.resume().catch(() => undefined);
+    }
+    const running = isAudioRunning(howler);
+    if (running) setUnlocked(true);
+    return running;
+  }, [load]);
 
   useEffect(() => {
     // Carga diferida: cuando el navegador quede libre tras el primer render.
@@ -51,25 +70,28 @@ export function useCashSound() {
         ? window.requestIdleCallback(() => void load(), { timeout: 3000 })
         : window.setTimeout(() => void load(), 1500);
 
-    // Desbloqueo en la primera interacción. Howler también lo intenta por su
-    // cuenta, pero solo si ya estaba cargado cuando ocurrió el clic.
-    const unlock = () => {
-      for (const event of UNLOCK_EVENTS) window.removeEventListener(event, unlock);
-      void load().then(() => {
-        const howler = howlerRef.current;
-        if (howler?.usingWebAudio && howler.ctx?.state !== "running") {
-          howler.ctx.resume().catch(() => undefined);
-        }
+    // Cualquier interacción con la página también desbloquea el audio.
+    const removeListeners = () => {
+      for (const event of UNLOCK_EVENTS) window.removeEventListener(event, onInteraction);
+    };
+    const onInteraction = () => {
+      void unlock().then((running) => {
+        if (running) removeListeners();
       });
     };
-    for (const event of UNLOCK_EVENTS) window.addEventListener(event, unlock);
+    for (const event of UNLOCK_EVENTS) window.addEventListener(event, onInteraction);
 
     return () => {
       if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idleId);
       else window.clearTimeout(idleId);
-      for (const event of UNLOCK_EVENTS) window.removeEventListener(event, unlock);
+      removeListeners();
     };
-  }, [load]);
+  }, [load, unlock]);
+
+  /** Botón "Activar sonido": desbloquea y suena una vez como confirmación. */
+  const enable = useCallback(async () => {
+    if (await unlock()) howlRef.current?.play();
+  }, [unlock]);
 
   /** Reproduce el sonido de venta. Si el audio sigue bloqueado no hace nada (no acumula sonidos viejos). */
   const play = useCallback(() => {
@@ -80,5 +102,5 @@ export function useCashSound() {
     howl.rate(0.94 + Math.random() * 0.12, id);
   }, []);
 
-  return { play };
+  return { play, enable, unlocked };
 }

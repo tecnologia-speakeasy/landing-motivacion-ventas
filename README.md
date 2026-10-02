@@ -44,7 +44,7 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 
 **Opcional, más seguridad:** si alguien con acceso de superusuario al servidor de Postgres ejecuta [`scripts/sql/readonly-role.sql`](scripts/sql/readonly-role.sql), la landing puede usar un usuario propio que solo lee las columnas necesarias. Así, si su clave se filtrara desde Vercel, no daría acceso al resto de la base de inventario.
 
-> El sonido está siempre activo y al volumen máximo, pero el navegador lo bloquea hasta la primera interacción: al abrir la pantalla de la oficina, haz un clic en cualquier parte.
+> El sonido va al volumen máximo, pero el navegador lo bloquea hasta la primera interacción: al abrir la pantalla de la oficina, pulsa **Activar sonido** (o haz clic en cualquier parte). El botón desaparece en cuanto el audio queda activo.
 
 ## Cómo probar
 
@@ -58,7 +58,8 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 
 ## Comportamiento
 
-- **Pantalla:** solo el número del total, centrado. Sin textos ni controles.
+- **Pantalla:** solo el número del total, centrado, y el botón "Activar sonido" hasta que se pulse.
+- **Primera venta del programa (0 → 1):** se celebra igual que las demás.
 - **Compra nueva:** +1 con lluvia de billetes de 100 dólares y sonido de caja registradora.
 - **Varias compras juntas (hasta 5):** se celebran una a una, cada 650 ms.
 - **Más de 5 en una consulta:** se trata como importación masiva o reconexión. El número se actualiza sin celebrar.

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { withReadOnlyTransaction } from "./db";
-import { parseCursor, type SalesCursor } from "./sales-cursor";
+import { INITIAL_CURSOR, parseCursor, type SalesCursor } from "./sales-cursor";
 import type { SaleEvent, SalesSnapshot } from "./sales-types";
 
 /** Máximo de compras nuevas devueltas por consulta. */
@@ -53,6 +53,8 @@ export function getSalesSnapshot(productId: string, after: SalesCursor | null): 
       sales = result.rows.reverse().map((row) => ({ id: row.id, createdAt: row.created_at }));
     }
 
-    return { count: total, cursor, sales, serverTime: new Date().toISOString() };
+    // Sin compras no hay "última compra": se devuelve el cursor inicial para que
+    // la primera que llegue se detecte como nueva y se celebre.
+    return { count: total, cursor: cursor ?? INITIAL_CURSOR, sales, serverTime: new Date().toISOString() };
   });
 }

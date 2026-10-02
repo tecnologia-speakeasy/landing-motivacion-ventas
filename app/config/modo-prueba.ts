@@ -9,5 +9,5 @@
  */
 export const MODO_PRUEBA = {
   activo: true,
-  cadaSegundos: 10,
+  cadaSegundos: 2,
 };

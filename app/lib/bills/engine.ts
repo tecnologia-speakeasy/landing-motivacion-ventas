@@ -34,8 +34,8 @@ export type BillsEngineOptions = {
 };
 
 const DEFAULT_OPTIONS: BillsEngineOptions = {
-  maxBills: 90,
-  billsPerBurst: 14,
+  maxBills: 160,
+  billsPerBurst: 28,
   textureUrl: "/textures/bill.svg",
   lifetime: [4.5, 6.5],
   fadeDuration: 0.9,
@@ -210,8 +210,8 @@ export class BillsEngine {
     const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
     keyLight.position.set(4, 8, 10);
     this.scene.add(keyLight);
-    // Contraluz neutra para separar los billetes del fondo sin teñir sus colores.
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    // Contraluz verde menta, a juego con el fondo: separa los billetes del negro.
+    const rimLight = new THREE.DirectionalLight(0xa7f3d0, 0.55);
     rimLight.position.set(-6, -3, -6);
     this.scene.add(rimLight);
 
@@ -355,7 +355,7 @@ export class BillsEngine {
     // la entrada para que la ráfaga parezca una lluvia y no un bloque.
     body.position.set(
       random(-halfWidth, halfWidth) * 0.95,
-      halfHeight + BILL_HEIGHT + Math.random() * halfHeight * 0.6,
+      halfHeight + BILL_HEIGHT + Math.random() * halfHeight * 0.9,
       z,
     );
     body.quaternion.setFromEuler(random(0, TAU), random(0, TAU), random(0, TAU));

@@ -48,7 +48,7 @@ export default function Counter({ value, bumpKey }: CounterProps) {
       <p
         key={bumpKey}
         aria-hidden="true"
-        className={`counter-glow font-extrabold leading-none tabular-nums tracking-tight text-white text-[clamp(5rem,24vw,17rem)] ${
+        className={`counter-number font-extrabold leading-none tabular-nums tracking-tight text-[clamp(5rem,24vw,17rem)] ${
           bumpKey > 0 ? "counter-bump" : ""
         }`}
       >
