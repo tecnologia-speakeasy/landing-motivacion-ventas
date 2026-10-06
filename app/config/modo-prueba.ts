@@ -8,6 +8,6 @@
  * ⚠ Déjalo en `false` antes de desplegar a producción.
  */
 export const MODO_PRUEBA = {
-  activo: true,
+  activo: false,
   cadaSegundos: 2,
 };

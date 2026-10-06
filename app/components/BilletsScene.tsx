@@ -53,8 +53,8 @@ export default function BilletsScene({ ref, className = "" }: BilletsSceneProps)
         try {
           engine = new BillsEngine(container, {
             // Menos billetes en móvil (pantalla pequeña, GPU modesta) y con movimiento reducido.
-            billsPerBurst: reducedMotion ? 5 : compact ? 16 : 28,
-            maxBills: compact ? 90 : 160,
+            billsPerBurst: reducedMotion ? 6 : compact ? 20 : 36,
+            maxBills: compact ? 110 : 200,
           });
         } catch (error) {
           // Sin WebGL: la landing sigue funcionando sin animación.

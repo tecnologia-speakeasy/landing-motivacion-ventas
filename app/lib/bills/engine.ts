@@ -34,8 +34,8 @@ export type BillsEngineOptions = {
 };
 
 const DEFAULT_OPTIONS: BillsEngineOptions = {
-  maxBills: 160,
-  billsPerBurst: 28,
+  maxBills: 200,
+  billsPerBurst: 36,
   textureUrl: "/textures/bill.svg",
   lifetime: [4.5, 6.5],
   fadeDuration: 0.9,
