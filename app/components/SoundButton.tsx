@@ -5,12 +5,12 @@
  * usuario interactúa con la página; la landing lo oculta en cuanto el audio
  * queda desbloqueado (por este botón o por cualquier otro clic).
  */
-export default function SoundButton({ onClick }: { onClick: () => void }) {
+export default function SoundButton({ onClick, className = "" }: { onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-400/10 px-5 py-2.5 text-sm font-semibold text-emerald-50 backdrop-blur transition hover:border-emerald-400/60 hover:bg-emerald-400/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:bottom-8"
+      className={`flex items-center gap-2 whitespace-nowrap rounded-full border border-white/40 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${className}`}
     >
       <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
         <path d="M11 5 6 9H3v6h3l5 4V5Z" strokeLinejoin="round" />

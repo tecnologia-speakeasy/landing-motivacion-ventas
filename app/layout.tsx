@@ -1,9 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat } from "next/font/google";
+import { Bebas_Neue, Montserrat } from "next/font/google";
 import "./globals.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Números condensados del contador ("0001").
+const bebasNeue = Bebas_Neue({
+  variable: "--font-counter",
+  weight: "400",
   subsets: ["latin"],
   display: "swap",
 });
@@ -16,12 +24,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#040605",
+  themeColor: "#2b1b5c",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${montserrat.variable} h-full antialiased`}>
+    <html lang="es" className={`${montserrat.variable} ${bebasNeue.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

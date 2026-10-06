@@ -210,8 +210,8 @@ export class BillsEngine {
     const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
     keyLight.position.set(4, 8, 10);
     this.scene.add(keyLight);
-    // Contraluz verde menta, a juego con el fondo: separa los billetes del negro.
-    const rimLight = new THREE.DirectionalLight(0xa7f3d0, 0.55);
+    // Contraluz neutra para separar los billetes del fondo sin teñir sus colores.
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
     rimLight.position.set(-6, -3, -6);
     this.scene.add(rimLight);
 

@@ -1,14 +1,22 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MODO_PRUEBA } from "@/app/config/modo-prueba";
 import { useCashSound } from "@/app/hooks/useCashSound";
 import { useSalesFeed, type FeedUpdate } from "@/app/hooks/useSalesFeed";
+// Versión optimizada de fondo.png (npm run fondo:optimize).
+import fondo from "@/public/landing/fondo.webp";
+import logo from "@/public/landing/logo-aprende-ingles.png";
+import personaje from "@/public/landing/personaje.png";
 
 import BilletsScene, { type BilletsSceneHandle } from "./BilletsScene";
 import Counter from "./Counter";
 import SoundButton from "./SoundButton";
+
+/** Encabezado junto al logo: cohorte cuyas compras cuenta la pantalla (CARTERA_PRODUCTO_ID). */
+const HEADING_LINES = ["Estudiantes", "Gen 2 - 2026"];
 
 const POLL_INTERVAL_MS = Math.max(1000, Number(process.env.NEXT_PUBLIC_SALES_POLL_MS) || 2000);
 /** Pausa entre celebraciones cuando llegan varias ventas juntas. */
@@ -111,11 +119,31 @@ export default function SalesLanding() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [simulateSale]);
 
+  // Capas, de atrás hacia delante: fondo → billetes → personaje → contenido.
+  // Horizontal (TV/computador): personaje a la izquierda, contador a la derecha.
+  // Vertical (móvil): encabezado y contador arriba, personaje abajo.
   return (
-    <main className="relative isolate flex min-h-dvh items-center justify-center overflow-hidden px-4">
-      <div aria-hidden="true" className="money-backdrop pointer-events-none fixed inset-0 -z-20" />
-      <div aria-hidden="true" className="money-grid pointer-events-none fixed inset-0 -z-20" />
-      <BilletsScene ref={sceneRef} className="-z-10" />
+    <main className="relative isolate h-dvh w-full overflow-hidden">
+      <Image
+        src={fondo}
+        alt=""
+        fill
+        // Se sirve tal cual: el optimizador de Next lo recomprime a calidad 75 y
+        // rompe en bloques las líneas topográficas (ver scripts/optimize-background.mjs).
+        unoptimized
+        loading="eager"
+        fetchPriority="high"
+        className="-z-30 object-cover object-top"
+      />
+      <BilletsScene ref={sceneRef} className="-z-20" />
+      <Image
+        src={personaje}
+        alt=""
+        sizes="(orientation: portrait) 120vw, 70vw"
+        loading="eager"
+        fetchPriority="high"
+        className="pointer-events-none absolute bottom-0 -z-10 max-w-none select-none portrait:-left-[10vw] portrait:h-auto portrait:w-[120vw] landscape:left-0 landscape:h-[min(100dvh,56vw)] landscape:w-auto"
+      />
 
       {MODO_PRUEBA.activo && (
         <p className="absolute right-4 top-4 rounded-full bg-amber-400 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-black sm:right-8 sm:top-6">
@@ -123,10 +151,36 @@ export default function SalesLanding() {
         </p>
       )}
 
-      <h1 className="sr-only">Ventas totales</h1>
-      <Counter value={displayCount} bumpKey={bumpKey} />
+      <section className="flex flex-col items-center portrait:mx-auto portrait:w-[84vw] portrait:gap-[8vw] portrait:pt-[10dvh] landscape:absolute landscape:right-[8.5vw] landscape:top-1/2 landscape:w-[33.6vw] landscape:-translate-y-1/2 landscape:gap-[5.7vw]">
+        <h1 className="flex items-center portrait:gap-[2.6vw] landscape:gap-[0.95vw]">
+          <span className="text-right font-extrabold uppercase leading-[1.08] tracking-[-0.01em] portrait:text-[5.6vw] landscape:text-[2.3vw]">
+            {HEADING_LINES.map((line) => (
+              <span key={line} className="block whitespace-nowrap">
+                {line}
+              </span>
+            ))}
+          </span>
+          <span aria-hidden="true" className="w-[2px] self-stretch bg-white/90" />
+          <Image
+            src={logo}
+            alt="Aprende inglés con Speak Easy"
+            // Texto fino de 8 KB: recomprimirlo solo ensucia los bordes de las letras.
+            unoptimized
+            className="h-auto portrait:w-[36vw] landscape:w-[13.4vw]"
+          />
+        </h1>
 
-      {!soundUnlocked && <SoundButton onClick={() => void enableSound()} />}
+        <div className="relative flex w-full items-center justify-center border-white portrait:rounded-[4vw] portrait:border-[3px] portrait:py-[5vw] landscape:rounded-[1.4vw] landscape:border-[max(3px,0.25vw)] landscape:py-[2.4vw]">
+          <Counter value={displayCount} bumpKey={bumpKey} className="portrait:text-[30vw] landscape:text-[12.3vw]" />
+
+          {!soundUnlocked && (
+            <SoundButton
+              onClick={() => void enableSound()}
+              className="absolute left-1/2 top-full mt-[max(1.5rem,2.5vw)] -translate-x-1/2"
+            />
+          )}
+        </div>
+      </section>
     </main>
   );
 }

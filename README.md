@@ -58,9 +58,9 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 
 ## Comportamiento
 
-- **Pantalla:** solo el número del total, centrado, y el botón "Activar sonido" hasta que se pulse.
+- **Pantalla:** el diseño de la cohorte (personaje, encabezado "Estudiantes Gen 2 - 2026" con el logo y el total en un recuadro, con 4 dígitos: "0001"). En pantallas verticales (móvil) el personaje pasa abajo. El botón "Activar sonido" aparece bajo el recuadro hasta que se pulsa.
 - **Primera venta del programa (0 → 1):** se celebra igual que las demás.
-- **Compra nueva:** +1 con lluvia de billetes de 100 dólares y sonido de caja registradora.
+- **Compra nueva:** +1 con lluvia de billetes de 100 dólares y sonido. Los dígitos ruedan como un reloj digital u odómetro: el que cambia sube y entra el nuevo desde abajo; con acarreo (0009 → 0010) también rueda la columna de al lado.
 - **Varias compras juntas (hasta 5):** se celebran una a una, cada 650 ms.
 - **Más de 5 en una consulta:** se trata como importación masiva o reconexión. El número se actualiza sin celebrar.
 - **Compras borradas:** el número baja sin celebrar.
@@ -84,7 +84,7 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 app/
   config/modo-prueba.ts interruptor del modo prueba (ventas simuladas)
   api/sales/count/      endpoint que consulta la cartera
-  components/           SalesLanding (orquesta), Counter, BilletsScene
+  components/           SalesLanding (diseño y orquestación), Counter, BilletsScene, SoundButton
   hooks/                useSalesFeed (polling con cursor), useCashSound (Howler)
   lib/
     bills/              engine.ts (Three.js + cannon-es), aerodynamics.ts (física del papel)
@@ -92,12 +92,14 @@ app/
     sales-cursor.ts     formato del cursor
     http.ts rate-limit.ts logger.ts
 public/textures/bill.svg  billete de 100 dólares: frente arriba y reverso abajo (regenerable con `npm run texture:generate`)
-public/sounds/cash.wav    sonido (regenerable con `npm run sound:generate`)
+public/landing/          personaje, logo y fondo (fondo.png es la fuente; la landing usa fondo.webp, generado con `npm run fondo:optimize`)
+public/sounds/            ring.mp3 (sonido en uso) y cash.wav (regenerable con `npm run sound:generate`)
 scripts/
   sql/readonly-role.sql         opcional: usuario de acceso mínimo
   sql/local-cartera-schema.sql  réplica mínima de las tablas para desarrollo
   local-cartera.mjs             crea tablas y simula compras en local
   generate-bill-texture.mjs     genera la textura del billete
+  optimize-background.mjs       fondo.png → fondo.webp (3840 px, calidad 90)
   generate-cash-sound.mjs       genera el sonido
 tests/                    Vitest
 ```

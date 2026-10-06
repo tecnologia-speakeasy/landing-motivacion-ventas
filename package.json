@@ -12,7 +12,8 @@
     "local:setup": "node scripts/local-cartera.mjs setup",
     "local:compra": "node scripts/local-cartera.mjs compra",
     "sound:generate": "node scripts/generate-cash-sound.mjs",
-    "texture:generate": "node scripts/generate-bill-texture.mjs"
+    "texture:generate": "node scripts/generate-bill-texture.mjs",
+    "fondo:optimize": "node scripts/optimize-background.mjs"
   },
   "dependencies": {
     "cannon-es": "^0.20.0",
@@ -35,6 +36,7 @@
     "@types/three": "^0.186.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.3"
