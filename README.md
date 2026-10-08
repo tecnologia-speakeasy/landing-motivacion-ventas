@@ -65,6 +65,7 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 - **Más de 5 en una consulta:** se trata como importación masiva o reconexión. El número se actualiza sin celebrar.
 - **Compras borradas:** el número baja sin celebrar.
 - **Sin conexión:** el número se queda en el último valor y la pantalla reintenta en segundo plano (hasta cada 30 s).
+- **Pestaña en segundo plano:** sigue consultando cada pocos segundos (el temporizador corre en un Web Worker, que el navegador no frena) y el sonido suena igual. Los billetes caen al volver a la pestaña, porque el navegador pausa las animaciones ocultas. Para que el navegador no "duerma" la pestaña tras mucho tiempo, agrega el sitio a "Mantener siempre activos estos sitios" (Chrome: Configuración → Rendimiento) o "Nunca suspender estos sitios" (Edge: Sistema y rendimiento).
 
 ## API
 

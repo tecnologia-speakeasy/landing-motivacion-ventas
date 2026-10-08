@@ -6,6 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Howler usa el primer formato soportado. Añade aquí un .mp3/.webm si reemplazas el sonido. */
 export const CASH_SOUND_SRC = ["/sounds/ring.mp3"];
 
+/** Veces que suena el audio por cada venta (una tras otra). */
+const CASH_SOUND_REPEATS = 1;
+
 const UNLOCK_EVENTS = ["pointerdown", "keydown", "touchend"] as const;
 
 function isAudioRunning(howler: HowlerGlobal | null): boolean {
@@ -27,14 +30,25 @@ function isAudioRunning(howler: HowlerGlobal | null): boolean {
  */
 export function useCashSound() {
   const [unlocked, setUnlocked] = useState(false);
+  // Copia en ref de `unlocked` para leerla dentro de play() sin recrearlo.
+  const unlockedRef = useRef(false);
   const howlRef = useRef<Howl | null>(null);
   const howlerRef = useRef<HowlerGlobal | null>(null);
   const loadRef = useRef<Promise<void> | null>(null);
+
+  const markUnlocked = useCallback(() => {
+    unlockedRef.current = true;
+    setUnlocked(true);
+  }, []);
 
   const load = useCallback((): Promise<void> => {
     loadRef.current ??= import("howler")
       .then(({ Howl, Howler }) => {
         howlerRef.current = Howler;
+        // Por defecto Howler suspende el audio 30 s después del último sonido
+        // para ahorrar energía. En una pantalla donde las ventas llegan cada
+        // varios minutos eso dejaba mudas las siguientes: se mantiene activo.
+        Howler.autoSuspend = false;
         Howler.volume(1);
         howlRef.current = new Howl({
           src: CASH_SOUND_SRC,
@@ -42,14 +56,14 @@ export function useCashSound() {
           pool: 8, // varias ventas seguidas pueden solaparse
           onloaderror: (_id, error) => console.warn("[sonido] No se pudo cargar el sonido", error),
           // Howler desbloquea por su cuenta en el primer clic si ya estaba cargado.
-          onunlock: () => setUnlocked(true),
+          onunlock: markUnlocked,
         });
         // Navegadores que permiten autoplay: ya está listo, sin botón.
-        if (isAudioRunning(Howler)) setUnlocked(true);
+        if (isAudioRunning(Howler)) markUnlocked();
       })
       .catch((error: unknown) => console.warn("[sonido] No se pudo cargar Howler", error));
     return loadRef.current;
-  }, []);
+  }, [markUnlocked]);
 
   /** Carga Howler (si hace falta) y reanuda el audio. Debe llamarse desde un gesto del usuario. */
   const unlock = useCallback(async (): Promise<boolean> => {
@@ -59,9 +73,9 @@ export function useCashSound() {
       await howler.ctx.resume().catch(() => undefined);
     }
     const running = isAudioRunning(howler);
-    if (running) setUnlocked(true);
+    if (running) markUnlocked();
     return running;
-  }, [load]);
+  }, [load, markUnlocked]);
 
   useEffect(() => {
     // Carga diferida: cuando el navegador quede libre tras el primer render.
@@ -93,13 +107,30 @@ export function useCashSound() {
     if (await unlock()) howlRef.current?.play();
   }, [unlock]);
 
-  /** Reproduce el sonido de venta. Si el audio sigue bloqueado no hace nada (no acumula sonidos viejos). */
+  /**
+   * Reproduce el sonido de venta CASH_SOUND_REPEATS veces seguidas.
+   * Antes del primer clic no hace nada (no acumula sonidos viejos para cuando
+   * el navegador lo permita). Después suena siempre, también con la pestaña
+   * en segundo plano.
+   */
   const play = useCallback(() => {
     const howl = howlRef.current;
-    if (!howl || !isAudioRunning(howlerRef.current)) return;
-    const id = howl.play();
+    const howler = howlerRef.current;
+    if (!howl || !howler || !unlockedRef.current) return;
+    // Si el navegador suspendió el audio (p. ej. al cambiar el dispositivo de
+    // salida), se reanuda: ya hubo interacción, así que lo permite sin otro clic.
+    if (howler.usingWebAudio && howler.ctx?.state !== "running") {
+      howler.ctx.resume().catch(() => undefined);
+    }
     // Ligera variación de tono para que ventas seguidas no suenen idénticas.
-    howl.rate(0.94 + Math.random() * 0.12, id);
+    const rate = 0.94 + Math.random() * 0.12;
+    const playTimes = (remaining: number) => {
+      const id = howl.play();
+      howl.rate(rate, id);
+      // Encadena la siguiente repetición cuando termina esta.
+      if (remaining > 1) howl.once("end", () => playTimes(remaining - 1), id);
+    };
+    playTimes(CASH_SOUND_REPEATS);
   }, []);
 
   return { play, enable, unlocked };

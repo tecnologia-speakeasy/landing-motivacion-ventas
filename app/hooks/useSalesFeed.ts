@@ -14,6 +14,44 @@ export type FeedUpdate = {
 
 const MAX_BACKOFF_MS = 30_000;
 
+type Ticker = { schedule: (delayMs: number) => void; cancel: () => void; dispose: () => void };
+
+/** Temporizador del Web Worker: espera `delay` ms y avisa; -1 cancela. */
+const TICKER_SOURCE = "let t;onmessage=(e)=>{clearTimeout(t);if(e.data>=0)t=setTimeout(()=>postMessage(0),e.data)}";
+
+/**
+ * Temporizador para el polling que no frena el navegador en segundo plano.
+ * Chrome limita los temporizadores de una pestaña oculta (tras 5 minutos, a
+ * uno por minuto), pero no los de un Web Worker: así la landing sigue
+ * detectando ventas cada pocos segundos aunque estés en otra pestaña.
+ */
+function createTicker(onTick: () => void): Ticker {
+  try {
+    const url = URL.createObjectURL(new Blob([TICKER_SOURCE], { type: "text/javascript" }));
+    const worker = new Worker(url);
+    worker.onmessage = onTick;
+    return {
+      schedule: (delayMs) => worker.postMessage(delayMs),
+      cancel: () => worker.postMessage(-1),
+      dispose: () => {
+        worker.terminate();
+        URL.revokeObjectURL(url);
+      },
+    };
+  } catch {
+    // Sin Web Workers: temporizador normal (puede ir más lento en segundo plano).
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    return {
+      schedule: (delayMs) => {
+        clearTimeout(timer);
+        timer = setTimeout(onTick, delayMs);
+      },
+      cancel: () => clearTimeout(timer),
+      dispose: () => clearTimeout(timer),
+    };
+  }
+}
+
 /**
  * Mantiene el contador sincronizado con la cartera mediante polling.
  *
@@ -25,7 +63,8 @@ const MAX_BACKOFF_MS = 30_000;
  *
  * - Envía el cursor de la última compra vista y recibe solo las nuevas.
  * - Reintentos con backoff exponencial si falla la red o la API.
- * - Se pausa con la pestaña oculta y consulta al volver.
+ * - Sigue consultando con la pestaña en segundo plano (para que la venta suene
+ *   aunque estés en otra pestaña) y consulta al instante al volver a ella.
  */
 export function useSalesFeed({
   intervalMs,
@@ -39,23 +78,23 @@ export function useSalesFeed({
   const emitUpdate = useEffectEvent(onUpdate);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let controller: AbortController | null = null;
     let requestId = 0;
     let failures = 0;
     let stopped = false;
+    const ticker = createTicker(() => void poll());
 
     const schedule = () => {
-      if (stopped || document.hidden) return;
+      if (stopped) return;
       const delay = failures === 0 ? intervalMs : Math.min(MAX_BACKOFF_MS, intervalMs * 2 ** failures);
-      timer = setTimeout(poll, delay);
+      ticker.schedule(delay);
     };
 
     async function poll() {
       // Solo la consulta más reciente reprograma el siguiente ciclo; así la
       // consulta al volver a la pestaña no duplica el polling.
       const id = ++requestId;
-      clearTimeout(timer);
+      ticker.cancel();
       controller?.abort();
       const current = (controller = new AbortController());
 
@@ -83,9 +122,9 @@ export function useSalesFeed({
       }
     }
 
+    // Al volver a la pestaña, consulta al instante sin esperar al siguiente ciclo.
     const onVisibilityChange = () => {
-      if (document.hidden) clearTimeout(timer);
-      else void poll();
+      if (!document.hidden) void poll();
     };
 
     void poll();
@@ -93,7 +132,7 @@ export function useSalesFeed({
 
     return () => {
       stopped = true;
-      clearTimeout(timer);
+      ticker.dispose();
       controller?.abort();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
