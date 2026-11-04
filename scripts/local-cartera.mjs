@@ -7,8 +7,9 @@
  *   npm run local:compra -- --count 3            # 3 compras seguidas
  *   npm run local:compra -- --metodo ZELLE --monto 180
  *
- * Usa DATABASE_URL y CARTERA_PRODUCTO_ID de .env.local. Se niega a ejecutarse
- * si DATABASE_URL no apunta a localhost.
+ * Usa DATABASE_URL de .env.local y el producto activo de
+ * app/config/productos.json. Se niega a ejecutarse si DATABASE_URL no apunta
+ * a localhost.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -30,11 +31,19 @@ const { positionals, values } = parseArgs({
 });
 
 const url = process.env.DATABASE_URL;
-const productId = process.env.CARTERA_PRODUCTO_ID;
-if (!url || !productId) {
-  console.error("Faltan DATABASE_URL o CARTERA_PRODUCTO_ID en .env.local");
+if (!url) {
+  console.error("Falta DATABASE_URL en .env.local");
   process.exit(1);
 }
+
+const configPath = join(dirname(fileURLToPath(import.meta.url)), "..", "app", "config", "productos.json");
+const { productoActivo, productos } = JSON.parse(readFileSync(configPath, "utf8"));
+const producto = productos?.[productoActivo];
+if (!producto?.id) {
+  console.error(`app/config/productos.json: "productoActivo" (${productoActivo}) no es un producto con id.`);
+  process.exit(1);
+}
+const productId = producto.id;
 const host = new URL(url).hostname;
 if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host)) {
   console.error(`Por seguridad este script solo escribe en bases locales (DATABASE_URL apunta a ${host}).`);
@@ -53,10 +62,10 @@ try {
     const schema = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "sql", "local-cartera-schema.sql"), "utf8");
     await client.query(schema);
     await client.query(
-      `INSERT INTO cartera_productos (id, nombre) VALUES ($1, 'APRENDE INGLÉS CON SPEAK EASY G2') ON CONFLICT (id) DO NOTHING`,
-      [productId],
+      `INSERT INTO cartera_productos (id, nombre) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [productId, producto.nombre ?? productoActivo],
     );
-    console.log(`Tablas listas y programa ${productId} creado.`);
+    console.log(`Tablas listas y programa ${producto.nombre ?? productoActivo} (${productId}) creado.`);
   } else if (command === "compra") {
     const total = Math.max(1, Number.parseInt(values.count, 10) || 1);
     for (let i = 0; i < total; i++) {

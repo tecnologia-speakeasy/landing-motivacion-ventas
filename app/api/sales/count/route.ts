@@ -1,18 +1,26 @@
 import type { NextRequest } from "next/server";
 
-import { createRouteRateLimit, errorResponse, HttpError, jsonError, requireEnv } from "@/app/lib/http";
+import { createRouteRateLimit, errorResponse, HttpError, jsonError } from "@/app/lib/http";
+import { getProductoActivo } from "@/app/lib/productos";
 import { getSalesSnapshot } from "@/app/lib/sales";
 import { parseCursor } from "@/app/lib/sales-cursor";
 
 // Holgado: cada pantalla consulta cada ~2 s (≈30/min).
 const rateLimit = createRouteRateLimit("sales-count", { limit: 120, windowMs: 60_000 });
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Id en la cartera del producto activo. Un productos.json inválido es un error de configuración. */
+function productoActivoId(): string {
+  try {
+    return getProductoActivo().id;
+  } catch (error) {
+    throw new HttpError(500, "server_misconfigured", error instanceof Error ? error.message : String(error));
+  }
+}
 
 /**
  * GET /api/sales/count[?after=<cursor>]
  *
- * Total de compras del programa configurado en CARTERA_PRODUCTO_ID. Con
+ * Total de compras del producto activo de app/config/productos.json. Con
  * `after` (el cursor de la respuesta anterior) incluye las compras nuevas
  * para que la landing celebre cada una.
  */
@@ -27,11 +35,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const productId = requireEnv("CARTERA_PRODUCTO_ID");
-    if (!UUID_PATTERN.test(productId)) {
-      throw new HttpError(500, "server_misconfigured", "CARTERA_PRODUCTO_ID no es un UUID válido.");
-    }
-    const snapshot = await getSalesSnapshot(productId, after);
+    const snapshot = await getSalesSnapshot(productoActivoId(), after);
     return Response.json(snapshot, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return errorResponse(error, { route: "GET /api/sales/count" });

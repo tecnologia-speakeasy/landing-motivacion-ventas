@@ -1,6 +1,6 @@
 # Landing de motivación de ventas
 
-Pantalla con el total de ventas del programa **APRENDE INGLÉS CON SPEAK EASY G2** en tiempo real. Cada compra nueva sube el contador, lanza una lluvia de billetes en 3D y suena una caja registradora.
+Pantalla con el total de ventas de un programa de la cartera en tiempo real (hoy, **APRENDE INGLÉS CON SPEAK EASY G2**; se cambia en [`app/config/productos.json`](#productos)). Cada compra nueva sube el contador, lanza una lluvia de billetes en 3D y suena una caja registradora.
 
 **Stack:** Next.js 16 (App Router) · Three.js + cannon-es · Howler.js · PostgreSQL (`pg`) · Tailwind CSS 4 · Vitest
 
@@ -13,7 +13,7 @@ La landing **no recibe webhooks ni tiene base de datos propia**. Las ventas ya l
 - altas manuales, por ejemplo Zelle;
 - importación desde Excel.
 
-La landing lee en **solo lectura** la tabla `cartera_compras` filtrada por el programa (`CARTERA_PRODUCTO_ID`). Cuenta una venta por compra (comprador), no por cuota.
+La landing lee en **solo lectura** la tabla `cartera_compras` filtrada por el programa del producto activo ([`app/config/productos.json`](app/config/productos.json)). Cuenta una venta por compra (comprador), no por cuota.
 
 ```
 Hotmart / Stripe / admin ──► inventario-speakeasy ──► cartera_compras (Postgres)
@@ -37,14 +37,53 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
    | Variable | Uso |
    | --- | --- |
    | `DATABASE_URL` | La misma de inventario-speakeasy. La landing solo hace `SELECT` en transacciones de solo lectura, así que no puede modificar nada. |
-   | `CARTERA_PRODUCTO_ID` | Id del programa en la cartera (`79e47346-0188-4aa8-b706-818b68442866` para G2). |
    | `NEXT_PUBLIC_SALES_POLL_MS` | Opcional: intervalo de consulta en ms (por defecto 2000). |
 
-2. `npm install && npm run dev` y abre http://localhost:3000.
+2. **Producto.** El programa que se cuenta, su personaje y sus textos se configuran en [`app/config/productos.json`](app/config/productos.json) (ver [Productos](#productos)).
+
+3. `npm install && npm run dev` y abre http://localhost:3000.
 
 **Opcional, más seguridad:** si alguien con acceso de superusuario al servidor de Postgres ejecuta [`scripts/sql/readonly-role.sql`](scripts/sql/readonly-role.sql), la landing puede usar un usuario propio que solo lee las columnas necesarias. Así, si su clave se filtrara desde Vercel, no daría acceso al resto de la base de inventario.
 
 > El sonido va al volumen máximo, pero el navegador lo bloquea hasta la primera interacción: al abrir la pantalla de la oficina, pulsa **Activar sonido** (o haz clic en cualquier parte). El botón desaparece en cuanto el audio queda activo.
+
+## Productos
+
+La pantalla es una plantilla: todo lo que cambia de un programa a otro está en [`app/config/productos.json`](app/config/productos.json).
+
+```json
+{
+  "productoActivo": "gen2-2026",
+  "productos": {
+    "gen2-2026": {
+      "nombre": "APRENDE INGLÉS CON SPEAK EASY G2",
+      "id": "79e47346-0188-4aa8-b706-818b68442866",
+      "imagen": "/productos/personaje-gen2-2026.png",
+      "encabezado": ["Estudiantes", "Gen 2 - 2026"],
+      "textoLogo": ["APRENDE", "INGLÉS CON", "SPEAK EASY®"]
+    }
+  }
+}
+```
+
+| Campo | Qué es |
+| --- | --- |
+| `productoActivo` | Clave del producto que muestra la pantalla. **Para cambiar de producto, cambia solo este valor.** |
+| `productos` | Todos los productos, cada uno con una clave libre (`"gen2-2026"`, `"gen3-2027"`…). Se pueden dejar los anteriores. |
+| `nombre` | Nombre del programa en la cartera. Es informativo; `npm run local:setup` lo usa al crear el programa en local. |
+| `id` | Id del programa en la cartera de inventario (Administrativo → Cartera). Solo se cuentan sus compras. |
+| `imagen` | Ruta del personaje dentro de `public/`, por ejemplo `/productos/personaje-gen3.png` para `public/productos/personaje-gen3.png`. Sirve PNG, JPG o WebP con fondo transparente. |
+| `encabezado` | Texto a la izquierda de la línea. Cada elemento de la lista es un renglón. |
+| `textoLogo` | Texto del logo, a la derecha de la línea, en negrita gruesa. Cada elemento es un renglón. Los símbolos `®`, `™` y `©` salen pequeños y elevados, como en el logo. |
+
+**Agregar un producto nuevo:**
+
+1. Copia la imagen del personaje en `public/productos/`.
+2. En `productos.json`, agrega una entrada en `productos` con su clave, id, imagen y textos.
+3. Pon esa clave en `productoActivo`.
+4. Despliega. Los productos se leen al compilar, así que el cambio llega a la pantalla con el siguiente despliegue (en local, al guardar).
+
+Si `productos.json` tiene un error (un id que no es UUID, una clave activa que no existe, una imagen que no está en `public/`), `npm run build` falla con un mensaje que dice qué corregir. `npm test` revisa también las imágenes de los productos que no están activos.
 
 ## Cómo probar
 
@@ -58,7 +97,7 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 
 ## Comportamiento
 
-- **Pantalla:** el diseño de la cohorte (personaje, encabezado "Estudiantes Gen 2 - 2026" con el logo y el total en un recuadro, con 4 dígitos: "0001"). En pantallas verticales (móvil) el personaje pasa abajo. El botón "Activar sonido" aparece bajo el recuadro hasta que se pulsa.
+- **Pantalla:** el diseño de la cohorte (personaje, encabezado "Estudiantes Gen 2 - 2026" con el texto del logo y el total en un recuadro, con 4 dígitos: "0001"). Personaje y textos salen del producto activo. En pantallas verticales (móvil) el personaje pasa abajo. El botón "Activar sonido" aparece bajo el recuadro hasta que se pulsa.
 - **Primera venta del programa (0 → 1):** se celebra igual que las demás.
 - **Compra nueva:** +1 con lluvia de billetes de 100 dólares y sonido. Los dígitos ruedan como un reloj digital u odómetro: el que cambia sube y entra el nuevo desde abajo; con acarreo (0009 → 0010) también rueda la columna de al lado.
 - **Varias compras juntas (hasta 5):** se celebran una a una, cada 650 ms.
@@ -83,6 +122,7 @@ Para tener *push* real en el futuro, basta con reemplazar `app/hooks/useSalesFee
 
 ```
 app/
+  config/productos.json productos: id de la cartera, personaje y textos; cuál está activo
   config/modo-prueba.ts interruptor del modo prueba (ventas simuladas)
   api/sales/count/      endpoint que consulta la cartera
   components/           SalesLanding (diseño y orquestación), Counter, BilletsScene, SoundButton
@@ -90,10 +130,12 @@ app/
   lib/
     bills/              engine.ts (Three.js + cannon-es), aerodynamics.ts (física del papel)
     db.ts sales.ts      pool de Postgres y consultas de la cartera
+    productos.ts        lee y valida productos.json (solo servidor)
     sales-cursor.ts     formato del cursor
     http.ts rate-limit.ts logger.ts
 public/textures/bill.svg  billete de 100 dólares: frente arriba y reverso abajo (regenerable con `npm run texture:generate`)
-public/landing/          personaje, logo y fondo (fondo.png es la fuente; la landing usa fondo.webp, generado con `npm run fondo:optimize`)
+public/productos/        personajes de los productos (los referencia productos.json)
+public/landing/          fondo (fondo.png es la fuente; la landing usa fondo.webp, generado con `npm run fondo:optimize`)
 public/sounds/            ring.mp3 (sonido en uso) y cash.wav (regenerable con `npm run sound:generate`)
 scripts/
   sql/readonly-role.sql         opcional: usuario de acceso mínimo

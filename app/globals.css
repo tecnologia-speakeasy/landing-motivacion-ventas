@@ -22,6 +22,15 @@ body {
   font-family: var(--font-montserrat), Arial, sans-serif;
 }
 
+/* ®, ™ y © de los textos de productos.json: pequeños y elevados, como en el
+   logo de Speak Easy. `line-height: 0` evita que separen los renglones. */
+.simbolo-marca {
+  font-size: 0.5em;
+  line-height: 0;
+  vertical-align: 0.7em;
+  margin-left: 0.3em;
+}
+
 /* Número del contador: condensado, blanco y con ancho fijo por dígito.
    Bebas Neue deja más espacio bajo los dígitos que sobre ellos: interlineado
    compacto y un leve desplazamiento hacia abajo para centrarlos en el recuadro

@@ -1,0 +1,19 @@
+{
+  "productoActivo": "blackFriday-2026",
+  "productos": {
+    "gen2-2026": {
+      "nombre": "APRENDE INGLÉS CON SPEAK EASY G2",
+      "id": "79e47346-0188-4aa8-b706-818b68442866",
+      "imagen": "/productos/personaje-gen2-2026.png",
+      "encabezado": ["Estudiantes", "Gen 2 - 2026"],
+      "textoLogo": ["APRENDE", "INGLÉS CON", "SPEAK EASY®"]
+    },
+    "blackFriday-2026": {
+      "nombre": "MI RUTINA DIARIA PARA APRENDER INGLÉS DESDE 0",
+      "id": "2f2453b2-861c-4387-9b56-0c9d19031794",
+      "imagen": "/productos/personaje-gen2-2026.png",
+      "encabezado": ["Black Friday", "Nov - 2026"],
+      "textoLogo": ["MI RUTINA DIARIA", "PARA APRENDER", "INGLÉS DESDE 0"]
+    } 
+  }
+}

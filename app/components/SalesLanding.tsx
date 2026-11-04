@@ -1,22 +1,48 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 
 import { MODO_PRUEBA } from "@/app/config/modo-prueba";
 import { useCashSound } from "@/app/hooks/useCashSound";
 import { useSalesFeed, type FeedUpdate } from "@/app/hooks/useSalesFeed";
 // Versión optimizada de fondo.png (npm run fondo:optimize).
 import fondo from "@/public/landing/fondo.webp";
-import logo from "@/public/landing/logo-aprende-ingles.png";
-import personaje from "@/public/landing/personaje.png";
 
 import BilletsScene, { type BilletsSceneHandle } from "./BilletsScene";
 import Counter from "./Counter";
 import SoundButton from "./SoundButton";
 
-/** Encabezado junto al logo: cohorte cuyas compras cuenta la pantalla (CARTERA_PRODUCTO_ID). */
-const HEADING_LINES = ["Estudiantes", "Gen 2 - 2026"];
+/** Imagen del personaje del producto, con su tamaño real en píxeles. */
+export type ImagenProducto = { src: string; width: number; height: number };
+
+/** Lo que cambia de un producto a otro (app/config/productos.json). */
+type SalesLandingProps = {
+  imagen: ImagenProducto;
+  /** Texto a la izquierda de la línea, un elemento por renglón ("Estudiantes", "Gen 2 - 2026"). */
+  encabezado: string[];
+  /** Texto del logo, a la derecha de la línea, un elemento por renglón. */
+  textoLogo: string[];
+};
+
+/** Marcas registradas: ®, ™ y © se muestran pequeños y en alto, como en el logo. */
+const SIMBOLOS_MARCA = /([®™©])/;
+
+function Renglones({ lineas }: { lineas: string[] }) {
+  return lineas.map((linea, index) => (
+    <span key={index} className="block whitespace-nowrap">
+      {linea.split(SIMBOLOS_MARCA).map((parte, i) =>
+        i % 2 === 1 ? (
+          <span key={i} className="simbolo-marca">
+            {parte}
+          </span>
+        ) : (
+          <Fragment key={i}>{parte}</Fragment>
+        ),
+      )}
+    </span>
+  ));
+}
 
 const POLL_INTERVAL_MS = Math.max(1000, Number(process.env.NEXT_PUBLIC_SALES_POLL_MS) || 2000);
 /** Pausa entre celebraciones cuando llegan varias ventas juntas. */
@@ -28,7 +54,7 @@ const CELEBRATION_GAP_MS = 650;
  */
 const BULK_THRESHOLD = 5;
 
-export default function SalesLanding() {
+export default function SalesLanding({ imagen, encabezado, textoLogo }: SalesLandingProps) {
   const sceneRef = useRef<BilletsSceneHandle>(null);
   /** Valores del contador pendientes de celebrar, uno por venta. */
   const queueRef = useRef<number[]>([]);
@@ -137,7 +163,9 @@ export default function SalesLanding() {
       />
       <BilletsScene ref={sceneRef} className="-z-20" />
       <Image
-        src={personaje}
+        src={imagen.src}
+        width={imagen.width}
+        height={imagen.height}
         alt=""
         sizes="(orientation: portrait) 120vw, 70vw"
         loading="eager"
@@ -154,20 +182,12 @@ export default function SalesLanding() {
       <section className="flex flex-col items-center portrait:mx-auto portrait:w-[84vw] portrait:gap-[8vw] portrait:pt-[10dvh] landscape:absolute landscape:right-[8.5vw] landscape:top-1/2 landscape:w-[33.6vw] landscape:-translate-y-1/2 landscape:gap-[5.7vw]">
         <h1 className="flex items-center portrait:gap-[2.6vw] landscape:gap-[0.95vw]">
           <span className="text-right font-extrabold uppercase leading-[1.08] tracking-[-0.01em] portrait:text-[5.6vw] landscape:text-[2.3vw]">
-            {HEADING_LINES.map((line) => (
-              <span key={line} className="block whitespace-nowrap">
-                {line}
-              </span>
-            ))}
+            <Renglones lineas={encabezado} />
           </span>
           <span aria-hidden="true" className="w-[2px] self-stretch bg-white/90" />
-          <Image
-            src={logo}
-            alt="Aprende inglés con Speak Easy"
-            // Texto fino de 8 KB: recomprimirlo solo ensucia los bordes de las letras.
-            unoptimized
-            className="h-auto portrait:w-[36vw] landscape:w-[13.4vw]"
-          />
+          <span className="text-left font-black uppercase leading-[0.96] tracking-[-0.01em] portrait:text-[5.05vw] landscape:text-[1.88vw]">
+            <Renglones lineas={textoLogo} />
+          </span>
         </h1>
 
         <div className="relative flex w-full items-center justify-center border-white portrait:rounded-[4vw] portrait:border-[3px] portrait:py-[5vw] landscape:rounded-[1.4vw] landscape:border-[max(3px,0.25vw)] landscape:py-[2.4vw]">
