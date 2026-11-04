@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { MODO_PRUEBA } from "@/app/config/modo-prueba";
 import { useCashSound } from "@/app/hooks/useCashSound";
@@ -23,21 +23,36 @@ type SalesLandingProps = {
   encabezado: string[];
   /** Texto del logo, a la derecha de la línea, un elemento por renglón. */
   textoLogo: string[];
+  /** Color de lo que va entre asteriscos en los textos ("*INGLÉS* DESDE 0"). */
+  colorDestacado: string;
 };
 
 /** Marcas registradas: ®, ™ y © se muestran pequeños y en alto, como en el logo. */
 const SIMBOLOS_MARCA = /([®™©])/;
 
+function ConSimbolos({ texto }: { texto: string }) {
+  return texto.split(SIMBOLOS_MARCA).map((parte, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className="simbolo-marca">
+        {parte}
+      </span>
+    ) : (
+      <Fragment key={i}>{parte}</Fragment>
+    ),
+  );
+}
+
+/** Un renglón por elemento. Lo que va entre asteriscos ("*INGLÉS*") sale en el color destacado. */
 function Renglones({ lineas }: { lineas: string[] }) {
   return lineas.map((linea, index) => (
     <span key={index} className="block whitespace-nowrap">
-      {linea.split(SIMBOLOS_MARCA).map((parte, i) =>
+      {linea.split("*").map((tramo, i) =>
         i % 2 === 1 ? (
-          <span key={i} className="simbolo-marca">
-            {parte}
+          <span key={i} className="texto-destacado">
+            <ConSimbolos texto={tramo} />
           </span>
         ) : (
-          <Fragment key={i}>{parte}</Fragment>
+          <ConSimbolos key={i} texto={tramo} />
         ),
       )}
     </span>
@@ -54,7 +69,7 @@ const CELEBRATION_GAP_MS = 650;
  */
 const BULK_THRESHOLD = 5;
 
-export default function SalesLanding({ imagen, encabezado, textoLogo }: SalesLandingProps) {
+export default function SalesLanding({ imagen, encabezado, textoLogo, colorDestacado }: SalesLandingProps) {
   const sceneRef = useRef<BilletsSceneHandle>(null);
   /** Valores del contador pendientes de celebrar, uno por venta. */
   const queueRef = useRef<number[]>([]);
@@ -180,7 +195,10 @@ export default function SalesLanding({ imagen, encabezado, textoLogo }: SalesLan
       )}
 
       <section className="flex flex-col items-center portrait:mx-auto portrait:w-[84vw] portrait:gap-[8vw] portrait:pt-[10dvh] landscape:absolute landscape:right-[8.5vw] landscape:top-1/2 landscape:w-[33.6vw] landscape:-translate-y-1/2 landscape:gap-[5.7vw]">
-        <h1 className="flex items-center portrait:gap-[2.6vw] landscape:gap-[0.95vw]">
+        <h1
+          className="flex items-center portrait:gap-[2.6vw] landscape:gap-[0.95vw]"
+          style={{ "--color-destacado": colorDestacado } as CSSProperties}
+        >
           <span className="text-right font-extrabold uppercase leading-[1.08] tracking-[-0.01em] portrait:text-[5.6vw] landscape:text-[2.3vw]">
             <Renglones lineas={encabezado} />
           </span>

@@ -30,6 +30,7 @@ export default async function Home() {
       imagen={await medirImagen(producto)}
       encabezado={producto.encabezado}
       textoLogo={producto.textoLogo}
+      colorDestacado={producto.colorDestacado}
     />
   );
 }

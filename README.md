@@ -61,6 +61,14 @@ La pantalla es una plantilla: todo lo que cambia de un programa a otro está en 
       "imagen": "/productos/personaje-gen2-2026.png",
       "encabezado": ["Estudiantes", "Gen 2 - 2026"],
       "textoLogo": ["APRENDE", "INGLÉS CON", "SPEAK EASY®"]
+    },
+    "blackFriday-2026": {
+      "nombre": "MI RUTINA DIARIA PARA APRENDER INGLÉS DESDE 0",
+      "id": "2f2453b2-861c-4387-9b56-0c9d19031794",
+      "imagen": "/productos/regalo-black-2026.png",
+      "encabezado": ["Black Friday", "Nov - 2026"],
+      "textoLogo": ["MI RUTINA DIARIA", "PARA APRENDER", "*INGLÉS* DESDE 0"],
+      "colorDestacado": "#FF327D"
     }
   }
 }
@@ -75,6 +83,7 @@ La pantalla es una plantilla: todo lo que cambia de un programa a otro está en 
 | `imagen` | Ruta del personaje dentro de `public/`, por ejemplo `/productos/personaje-gen3.png` para `public/productos/personaje-gen3.png`. Sirve PNG, JPG o WebP con fondo transparente. |
 | `encabezado` | Texto a la izquierda de la línea. Cada elemento de la lista es un renglón. |
 | `textoLogo` | Texto del logo, a la derecha de la línea, en negrita gruesa. Cada elemento es un renglón. Los símbolos `®`, `™` y `©` salen pequeños y elevados, como en el logo. |
+| `colorDestacado` | Opcional. Color, en hexadecimal, de lo que se escribe entre asteriscos en `encabezado` o `textoLogo`: `"*INGLÉS* DESDE 0"` pinta solo "INGLÉS". Los asteriscos no se ven en pantalla. Si no se indica, se usa el fucsia de marca `#FF327D`. |
 
 **Agregar un producto nuevo:**
 
@@ -82,6 +91,8 @@ La pantalla es una plantilla: todo lo que cambia de un programa a otro está en 
 2. En `productos.json`, agrega una entrada en `productos` con su clave, id, imagen y textos.
 3. Pon esa clave en `productoActivo`.
 4. Despliega. Los productos se leen al compilar, así que el cambio llega a la pantalla con el siguiente despliegue (en local, al guardar).
+
+**Preparar la imagen:** recórtala al contenido, sin márgenes transparentes; la pantalla la ajusta al alto disponible, así que el espacio vacío hace que el dibujo se vea más pequeño. **Para reemplazar una imagen, guárdala con un nombre nuevo** (por ejemplo `regalo-black-2026-v2.png`) y actualiza `imagen` en el JSON: Next guarda las imágenes optimizadas hasta 4 horas y, con el mismo nombre, seguiría mostrando la anterior. En local también se puede borrar la carpeta `.next/dev/cache/images`.
 
 Si `productos.json` tiene un error (un id que no es UUID, una clave activa que no existe, una imagen que no está en `public/`), `npm run build` falla con un mensaje que dice qué corregir. `npm test` revisa también las imágenes de los productos que no están activos.
 

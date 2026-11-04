@@ -11,9 +11,10 @@
     "blackFriday-2026": {
       "nombre": "MI RUTINA DIARIA PARA APRENDER INGLÉS DESDE 0",
       "id": "2f2453b2-861c-4387-9b56-0c9d19031794",
-      "imagen": "/productos/personaje-gen2-2026.png",
+      "imagen": "/productos/regalo-black-2026.png",
       "encabezado": ["Black Friday", "Nov - 2026"],
-      "textoLogo": ["MI RUTINA DIARIA", "PARA APRENDER", "INGLÉS DESDE 0"]
-    } 
+      "textoLogo": ["MI RUTINA DIARIA", "PARA APRENDER", "*INGLÉS* DESDE 0"],
+      "colorDestacado": "#FF327D"
+    }
   }
 }

@@ -22,6 +22,12 @@ body {
   font-family: var(--font-montserrat), Arial, sans-serif;
 }
 
+/* Lo que va entre asteriscos en los textos de productos.json ("*INGLÉS*").
+   El color lo pone cada producto (colorDestacado; por defecto, fucsia de marca). */
+.texto-destacado {
+  color: var(--color-destacado);
+}
+
 /* ®, ™ y © de los textos de productos.json: pequeños y elevados, como en el
    logo de Speak Easy. `line-height: 0` evita que separen los renglones. */
 .simbolo-marca {

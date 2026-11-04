@@ -54,6 +54,24 @@ describe("parseConfigProductos", () => {
     expect(() => parseConfigProductos({ ...valido, productos })).toThrow(/\.id/);
   });
 
+  it("usa el fucsia de marca como color destacado si no se indica otro", () => {
+    expect(parseConfigProductos(valido).productos.demo.colorDestacado).toBe("#FF327D");
+    const conColor = { demo: { ...valido.productos.demo, colorDestacado: "#00AAFF" } };
+    expect(parseConfigProductos({ ...valido, productos: conColor }).productos.demo.colorDestacado).toBe("#00AAFF");
+  });
+
+  it("rechaza un color que no es hexadecimal", () => {
+    const productos = { demo: { ...valido.productos.demo, colorDestacado: "fucsia" } };
+    expect(() => parseConfigProductos({ ...valido, productos })).toThrow(/colorDestacado/);
+  });
+
+  it("acepta palabras entre asteriscos y rechaza un asterisco sin cerrar", () => {
+    const cerrado = { demo: { ...valido.productos.demo, textoLogo: ["*INGLÉS* DESDE 0"] } };
+    const abierto = { demo: { ...valido.productos.demo, textoLogo: ["*INGLÉS DESDE 0"] } };
+    expect(() => parseConfigProductos({ ...valido, productos: cerrado })).not.toThrow();
+    expect(() => parseConfigProductos({ ...valido, productos: abierto })).toThrow(/falta cerrar/);
+  });
+
   it("rechaza textos vacíos o sin imagen", () => {
     const sinTexto = { demo: { ...valido.productos.demo, textoLogo: [] } };
     const sinImagen = { demo: { ...valido.productos.demo, imagen: "" } };
